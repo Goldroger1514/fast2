@@ -21,11 +21,7 @@ slide.onclick = function () {
 };
 let levels = document.querySelector("select");
 let options = document.querySelectorAll("option");
-window.onload = function () {
-  addLevel();
-  timeChecker();
-  changeDescription();
-};
+
 function addLevel() {
   if (!localStorage.getItem("level")) {
     localStorage.setItem("level", levels.value);
@@ -107,9 +103,9 @@ let wordsArray = [
   "BMW",
 ];
 let descriptionArray = [
-  "On this level,lowercase letters and uppercase letter doesn't matter,you just need to write the words correctly.\nYou have 1 minute.",
+  "On this level,lowercase letters and uppercase letter doesn't matter,you just need to write the words correctly.\nYou have 2 minutes.",
+  "On this level,lowercase letters and uppercase letter does matter,\nYou have 1 minute and 30 seconds.",
   "On this level,lowercase letters and uppercase letter does matter,\nYou have 1 minute.",
-  "On this level,lowercase letters and uppercase letter does matter,\nYou have 30 seconds.",
 ];
 function changeDescription() {
   let desc = document.querySelector(".description");
@@ -130,25 +126,45 @@ function levelChecker() {
     for (let i = 0; i < wordsArray.length; i++)
       if (wordsArray[i].length > 5) temp.push(wordsArray[i]);
     wordsArray = temp;
+  } else {
+    for (let i = 0; i < wordsArray.length; i++)
+      if (wordsArray[i].length <= 5) temp.push(wordsArray[i]);
+    wordsArray = temp;
   }
-  console.log(temp);
 }
 function generateWords() {
   let word = wordsArray[Math.floor(Math.random() * wordsArray.length)];
   levelChecker();
   if (count() == 0) total.innerHTML = wordsArray.length;
-  console.log(wordsArray.length);
   let index = wordsArray.indexOf(word);
   currentWord.innerHTML = word;
   upcomingWords.innerHTML = "";
+  console.log(wordsArray);
   wordsArray.splice(index, 1);
+  console.log(wordsArray);
   for (let i = 0; i < wordsArray.length; i++) {
     let span = document.createElement("span");
     span.innerHTML = wordsArray[i];
     upcomingWords.append(span);
   }
-
   console.log(wordsArray);
+  startPlay();
+}
+function generateWords1() {
+  let word;
+  let i = 0;
+  shuffleArray();
+  word = wordsArray[i];
+  levelChecker();
+  if (count() == 0) total.innerHTML = wordsArray.length;
+  currentWord.innerHTML = word;
+  upcomingWords.innerHTML = "";
+  for (let i = 0; i < wordsArray.length; i++) {
+    let span = document.createElement("span");
+    span.innerHTML = wordsArray[i];
+    upcomingWords.append(span);
+  }
+  wordsArray.shift();
   startPlay();
 }
 function count() {
@@ -160,28 +176,34 @@ function count() {
 }
 function timeChecker() {
   if (localStorage.getItem("level") == "Hard") {
-    minutes.innerHTML = 00;
-    seconds.innerHTML = 30;
-  } else {
     minutes.innerHTML = 1;
+    seconds.innerHTML = "00";
+  } else if (localStorage.getItem("level") == "Normal") {
+    minutes.innerHTML = 1;
+    seconds.innerHTML = "30";
+  } else {
+    minutes.innerHTML = 2;
     seconds.innerHTML = "00";
   }
 }
 function startPlay() {
-  console.log(wordsArray.length);
-  if (wordsArray.length == 0) {
-    endGame();
-  } else if (input.value.endsWith(" ")) {
+  if (input.value.endsWith(" ")) {
     wordChecker();
     input.value = "";
-    generateWords();
+    generateWords1();
   }
 }
 function timer() {
   let interval = setInterval(() => {
-    if (+minutes.innerHTML == 0 && +seconds.innerHTML == 0) {
+    if (
+      (+minutes.innerHTML == 0 && +seconds.innerHTML == 0) ||
+      wordsArray.length == 0
+    ) {
+      wordChecker();
       clearInterval(interval);
-      endGame();
+      setTimeout(() => {
+        endGame();
+      }, 3000);
     } else {
       if (+seconds.innerHTML == 0) {
         minutes.innerHTML--;
@@ -246,9 +268,33 @@ function wordChecker() {
 }
 start.onclick = function () {
   timer();
-  generateWords();
+  generateWords1();
   this.onclick = function () {
     return false;
   };
+  this.onhover = function () {
+    return false;
+  };
   input.focus();
+};
+function shuffleArray() {
+  if (!localStorage.getItem("array")) localStorage.setItem("array", wordsArray);
+  else {
+    let wordsArray = localStorage.getItem("array").split(",");
+    for (let i = 0; i < wordsArray.length; i++) {
+      for (let j = wordsArray.length - 1; j >= 0; j--) {
+        let x = wordsArray[i];
+        wordsArray[i] = wordsArray[j];
+        wordsArray[j] = x;
+      }
+    }
+    localStorage.setItem("array", wordsArray);
+  }
+}
+window.onload = function () {
+  addLevel();
+  timeChecker();
+  changeDescription();
+  shuffleArray();
+  wordsArray = localStorage.getItem("array").split(",");
 };
